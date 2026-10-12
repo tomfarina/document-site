@@ -1,139 +1,125 @@
-# Agent-friendly repo kit
+# Document Site
 
-Files you install into a repo so that agents can find their way around it and the docs stay correct as the code changes. `skills/` holds four Claude Code skills, laid out so `npx skills add` finds them. `kit/` holds the rest: two hooks, one pull request check, and the templates the skills write from.
+Skills that document a repo once, from evidence, and keep the docs true as the code changes. Built for legacy repos whose authors are often gone: the skills interview the code first and the architect last, and every claim carries a tier of Direct, Supported, Inferred, or Unknown.
 
-After install, the repo carries a short `CLAUDE.md`, a site profile, one feature file per user-facing area, and a few notes. Two scripts keep `docs/index.md` current. On every pull request a gate script checks whether a changed path is one the docs cover. Only when it is does one read-only model call decide whether a sentence in those docs became false, and the workflow posts the fix as a suggestion the author applies with one click. Nothing runs on a schedule.
+[![skills.sh](https://skills.sh/b/tomfarina/document-site)](https://skills.sh/tomfarina/document-site)
 
-The gate script was smoke-tested on Git Bash on 2026-10-12. The skills and the workflow have not yet run against a real repo.
+Four skills, two hooks, one pull request check, and the templates the skills write from. After install, the repo carries a short `CLAUDE.md`, a site profile, one feature file per user-facing area, and a few notes. On every pull request a gate script checks whether a changed path is one the docs cover. Only then does one read-only model call decide whether a sentence in those docs became false, and the workflow posts the fix as a suggestion the author applies with one click. Nothing runs on a schedule.
 
-## What you need
+## Install into a repo
 
-- Claude Code, with Git Bash on PATH on Windows. The hooks and the gate script are bash and need no other runtime.
-- Node, for `npx skills add`. Skip it if you install by hand.
-- A GitHub repo where every change goes through a pull request.
-- An Anthropic API key to store as a repository secret.
-- The `gh` CLI, if you want to create the secret and the label from a terminal.
+Everything installs into one repo and works only there. The skills read that repo's site profile and docs, the hooks live in its `.claude/settings.json`, and the check runs on its pull requests. Run every step from the root of the repo you want documented, and do not pass `-g`.
 
-## Install
+You need Claude Code, Node for `npx`, and Git Bash on PATH on Windows. The hooks and the gate script are bash and need no other runtime.
 
-1. Install the four skills. Pass `--copy` so the repo holds real files rather than links, which the workflow needs when it checks out `.claude` from the base branch.
+### 1. Get the skills
 
 ```bash
 npx skills add tomfarina/document-site --copy -y
 ```
 
-   This writes `.claude/skills/<name>/` for each skill and a `skills-lock.json` at the repo root. Commit the lock file. `npx skills update` brings the skills up to date later.
+This writes `.claude/skills/<name>/` for each skill and a `skills-lock.json` at the repo root. Commit the lock file. Pass `--copy` so the repo holds real files rather than links, which the workflow needs when it checks out `.claude` from the base branch.
 
-2. Install everything else. Open a Claude Code session in the site repo and paste the text of [install-prompt.md](install-prompt.md).
+### 2. Install the hooks and the PR check
 
-   It downloads this repo, copies every kit file the repo does not have, and merges the kit's two hooks into an existing `.claude/settings.json`. It asks before it replaces any file that differs from the kit's. It writes `.claude/sites/<key>.md` with the key, repo, client, and stack it can read from the repo, and tells you what it chose. It commits nothing. You can run it again after a kit update. If you skipped step 1, it copies the skills too.
+Open a Claude Code session in the same repo and paste the text of [install-prompt.md](install-prompt.md).
 
-3. Store the API key for the workflow.
+It downloads this repo, copies every kit file the repo does not have, and merges the two hooks into an existing `.claude/settings.json`. It asks before it replaces any file that differs. It writes `.claude/sites/<key>.md` with the key, repo, client, and stack it can read from the repo, and tells you what it chose. It commits nothing. If you skipped step 1, it copies the skills too.
+
+### 3. Wire up GitHub
+
+The repo needs every change to go through a pull request.
 
 ```bash
 gh secret set ANTHROPIC_API_KEY
 ```
 
-4. Create the label that dismisses the check.
+Optionally, create the label authors can apply to skip the docs check on a pull request. Without it the check still runs; the label only exists to dismiss it.
 
 ```bash
 gh label create docs-not-needed
 ```
 
-5. In the repo's Actions settings, allow GitHub Actions to create pull requests. The workflow needs this for the side PR it opens when the doc to fix is not in the author's diff.
+In the repo's Actions settings, allow GitHub Actions to create pull requests. The workflow needs this for the side PR it opens when the doc to fix is not in the author's diff. Then review and commit what the install changed.
 
-6. Review and commit what the install changed.
-
-7. Document the repo. In a Claude Code session in the site repo, run:
+### 4. Document the repo
 
 ```text
 /document-site
 ```
 
-   It opens one draft PR confined to `docs/`, `.claude/`, `CLAUDE.md`, and `AGENTS.md`, and writes the questions it could not answer from the code to `docs/open-questions.md`.
+It opens one draft PR confined to `docs/`, `.claude/`, `CLAUDE.md`, and `AGENTS.md`, and writes the questions it could not answer from the code to `docs/open-questions.md`. Answer those a few at a time with `/docs-answer`, then merge the PR. From then on the docs check runs on every pull request.
 
-8. Answer the open questions a few at a time. Each answer names the question number.
+## Skills
+
+### document-site
+
+Documents the repo. Sends read-only explorer subagents through the code, the tool-owned paths, the configuration, and the build. From what they find it writes the site profile, one feature file per user-facing area, the notes that pass the bar, `CLAUDE.md`, and `AGENTS.md`. Where the app can run, it writes a `verify-<key>` skill and runs it once against the read-only endpoints in the profile. An Unknown records what was searched and tells agents to preserve the code as-is. The architect gets only the questions the code and history could not answer. It never edits product code or tool-owned paths, apart from the opt-in comment harvest.
+
+**Use when:**
+
+- A repo has no `.claude/sites/<key>.md`, or its profile is mostly `unknown`
+- One new area needs a feature file
+- `/document-site with-comments`, only when the architect opts in. Adds the comment harvest, which edits product code in its own commit
+
+The [references](skills/document-site/references) folder holds what it reads: the explorer brief, the git history brief, where each profile field comes from, the layout of the open questions file, the shape of the verify skill, and the rules for the comment pass.
+
+### docs-answer
+
+Takes `<n>: <text>`, finds question `n` in `docs/open-questions.md`, and writes the answer where the next agent will find it: the site profile, a feature file's Gotchas, or a new note. The answer lands as a Direct claim with its source and date. "I don't know" becomes an Unknown entry. It then removes the question.
+
+**Use when:**
+
+- The architect has an answer to an open question
 
 ```text
 /docs-answer 3: We moved to Solr in 2021 because Lucene could not handle the provider index.
 ```
 
-9. Merge that PR. From then on the docs check runs on every pull request.
+### docs-check
 
-### Installing by hand
+The judgment half of the PR check. Reads the diff and the docs the gate found, and says yes for only three reasons. A listed path moved, a sentence states something the code no longer does, or the change adds a trap the next agent would fall into. Returns JSON with exact replacement lines and never writes a file. The workflow runs it on every PR where the gate fired. One call, Sonnet, capped at 1.50 USD.
 
-On a repo with no `.claude/` or `docs/` folder, a plain copy from a checkout of this repo does the same job as steps 1 and 2. It overwrites any file that already exists, so use the prompt everywhere else.
+**Use when:**
+
+- You want the PR verdict before pushing: `/docs-check <base-ref>`
+
+### validate-docs
+
+Gives a fresh subagent `CLAUDE.md`, the index, and one small real task. Compares the path the subagent took with the real one and scores each difference as wrong way, lag, or gap. Fixes every wrong-way item in the same session and logs the rest. This is the only test of whether the docs still work; the PR check only tests whether a change broke them.
+
+**Use when:**
+
+- Right after `/document-site`
+- Quarterly, or whenever the PR check seems to be letting things through
+- `/validate-docs <task>`, or no task to pick one from the feature map
+
+## What else the kit installs
+
+The install prompt copies [kit/](kit) into the repo. None of it calls a model.
+
+| When | What runs |
+|---|---|
+| Session start | `.claude/hooks/inject-docs-index.sh` prints `docs/index.md` into context with one line telling the agent to read the site profile first, and a feature file before changing code under a path it lists |
+| Any Edit, Write, or MultiEdit | `.claude/hooks/auto-index-docs.sh` rebuilds `docs/index.md` from the files under `docs/` when a doc was added or removed. Nobody edits the index by hand |
+| Every PR | `scripts/docs-gate.sh` lists the docs that cover the changed paths. A feature file covers a path under its `## Files` heading, a note covers a path in its `trigger:` line, the site profile covers its `## Gating files`. Prints nothing when no doc covers a change |
+| Every PR where the gate fired | `.github/workflows/docs-check.yml` runs `docs-check`, then posts a review suggestion for a doc in the diff, or a side PR into the author's branch for a doc outside it. Never blocks a merge. The `docs-not-needed` label skips it |
+
+- `.claude/settings.json` wires the two hooks.
+- `.claude/sites/_template.md` is the template for the site profile, the file agents read before any other. It holds identity, fences, tool-owned paths, runtime versions, build and test commands, the evidence ceiling, the gating files, and the places that look like the fix location but are not. Keep it under 16 KB.
+- `scripts/docs-check.schema.json` is the shape of the judgment's output: a `needs_update` flag, a reason, up to eight line-range suggestions, and up to three new files.
+- `docs/_templates/` holds the root instruction files, under forty lines each, the feature file with its five fixed headings, and the note with `trigger`, `confidence`, and `source` front matter. The feature file's Files list is what the gate reads.
+- `docs/features/README.md` explains the feature map. `docs/notes/README.md` states the bar for a note: an agent would reliably get the topic wrong without it.
+
+Run `bash scripts/docs-gate.sh <base-ref>` any time to see which docs cover your changes.
+
+## Updating
 
 ```bash
-cp -r <path-to-document-site>/kit/. .
-cp -r <path-to-document-site>/skills/. .claude/skills/
-cp .claude/sites/_template.md .claude/sites/<key>.md
+npx skills update
 ```
 
-Then fill in Key, Client, Repo, and Stack under Identity in the new profile and leave every other field as `unknown`.
-
-## What to run, and when
-
-| Command | When | What it does |
-|---|---|---|
-| `/document-site` | Once per repo, or later for one new area | Documents the repo and opens the docs PR |
-| `/document-site with-comments` | Only when the architect opts in | Same, plus the comment harvest, which edits product code in its own commit |
-| `/docs-answer <n>: <text>` | Whenever the architect has an answer | Writes the answer into the doc it belongs to and removes the question |
-| `/docs-check <base-ref>` | Before pushing, if you want the PR verdict early | Runs the same judgment the workflow runs |
-| `/validate-docs [task]` | After `/document-site`, then quarterly | Tests whether a fresh agent can do a real task from the docs alone |
-| `bash scripts/docs-gate.sh <base-ref>` | Any time | Lists the docs that cover your changed files. No model. |
-
-Everything else runs by itself.
-
-| When | What runs | Model call |
-|---|---|---|
-| Session start | `inject-docs-index.sh` prints `docs/index.md` into context | No |
-| Any Edit, Write, or MultiEdit | `auto-index-docs.sh` regenerates `docs/index.md` if a doc was added or removed | No |
-| Every PR | `docs-gate.sh` finds the docs that cover the changed paths. If none do, the check passes with no comment | No |
-| Every PR where the gate found docs | `docs-check` reads the diff and those docs | One call, Sonnet, capped at 1.50 USD |
-| Every PR where the judgment says yes | The workflow posts suggestions, or a side PR for docs outside the diff | No |
-
-## What each part does
-
-### Hooks
-
-`.claude/settings.json` wires two hooks. Neither calls a model.
-
-- `.claude/hooks/inject-docs-index.sh` runs on SessionStart. It prints `docs/index.md` into the session with one instruction line that tells the agent to read the site profile first and to read a feature file before changing code under a path it lists. It prints nothing if the index does not exist.
-- `.claude/hooks/auto-index-docs.sh` runs after every Edit, Write, or MultiEdit. It rebuilds `docs/index.md` from the files under `docs/`, skipping `_templates/`, and writes the file only when the result differs. Nobody edits the index by hand.
-
-### Skills
-
-- `.claude/skills/document-site/` documents the repo. You run it once. It sends read-only explorer subagents through the code, the tool-owned paths, the configuration, and the build. From what they find it writes the site profile, one feature file per user-facing area, and the notes that pass the bar. It also writes `CLAUDE.md` and `AGENTS.md`. Where the app can run, it writes a `verify-<key>` skill and runs it once against the read-only endpoints in the profile. Each claim carries a tier of Direct, Supported, Inferred, or Unknown. An Unknown records what was searched and tells agents to preserve the code as-is. The architect gets only the questions the code and history could not answer. The skill never edits product code or tool-owned paths, apart from the opt-in comment harvest.
-- `.claude/skills/document-site/references/` holds the prompts and formats `/document-site` reads.
-  - `explorer-prompt.md` is the brief for each explorer subagent.
-  - `why-prompt.md` is the brief for the git history investigation.
-  - `profile-fields.md` says where each profile field comes from.
-  - `interview-format.md` is the layout of `docs/open-questions.md`.
-  - `verify-skill.md` is the shape of the verify skill for a repo that runs.
-  - `comment-harvest.md` has the rules for the opt-in comment pass.
-- `.claude/skills/docs-check/` is the judgment half of the PR check. It reads the diff and the docs the gate found, and says yes for only three reasons. A listed path moved, a sentence states something the code no longer does, or the change adds a trap the next agent would fall into. It returns JSON with exact replacement lines and never writes a file.
-- `.claude/skills/docs-answer/` takes `<n>: <text>`, finds question `n` in `docs/open-questions.md`, and writes the answer to the site profile, a feature file's Gotchas, or a new note. "I don't know" becomes an Unknown entry. It then removes the question.
-- `.claude/skills/validate-docs/` gives a fresh subagent `CLAUDE.md`, the index, and one small real task. It compares the path the subagent took with the real one and scores each difference as wrong way, lag, or gap. It fixes every wrong-way item in the same session and logs the rest.
-
-### Site profile
-
-`.claude/sites/_template.md` is the template for `.claude/sites/<key>.md`, the file agents read before any other. It holds the site's identity, fences, tool-owned paths, runtime versions and top-level modules, build and test commands, the evidence ceiling, the gating files, and the places that look like the fix location but are not. Keep it under 16 KB.
-
-### Pull request check
-
-- `scripts/docs-gate.sh` is the gate. For each file changed between the base and the head it finds the docs that cover it. A feature file covers a path listed under its `## Files` heading. A note covers a path in its `trigger:` line. The site profile covers the paths listed under its `## Gating files` heading. It prints one line per affected doc and prints nothing when no doc covers a change. It ignores changes under `docs/` and `.claude/`.
-- `scripts/docs-check.schema.json` is the shape of the judgment's output. It has a `needs_update` flag, a reason, up to eight line-range suggestions, and up to three new files.
-- `.github/workflows/docs-check.yml` runs on every pull request from a branch in the same repo. It skips pull requests from forks. It runs the gate, then the judgment only if the gate printed something, then posts the result. A fix to a doc that is in the diff arrives as a review suggestion. A fix to a doc outside the diff arrives as a side PR into the author's branch. The check never blocks a merge. Adding the `docs-not-needed` label skips it and leaves the dismissal in the PR history.
-
-### Docs folder
-
-- `docs/index.md` is the generated index. It starts empty.
-- `docs/features/README.md` explains the feature map and holds the baseline preconditions and the sweep order. `/document-site` fills in both.
-- `docs/notes/README.md` states the bar for a note. A note earns a file only if an agent would reliably get the topic wrong without it.
-- `docs/_templates/CLAUDE.md` and `docs/_templates/AGENTS.md` are the root instruction files, under forty lines each, with the must-read pointers, the commands, and the rule table.
-- `docs/_templates/feature-page.md` is the feature file with its five fixed headings, which are Sub-features, How to get to it, Driving it, Files, and Gotchas. The Files list is what the gate reads.
-- `docs/_templates/note.md` is the note, with `trigger`, `confidence`, and `source` front matter.
+Then paste [install-prompt.md](install-prompt.md) again. It only touches files that are missing or unchanged.
 
 ## Making the check required
 
@@ -141,9 +127,14 @@ Start with the check optional. After a couple of months, count dismissed suggest
 
 ## Known gaps
 
+- The gate script was smoke-tested on Git Bash on 2026-10-12. The skills and the workflow have not yet run against a real repo.
 - `docs/features/README.md` mentions a `how` skill that explains a subsystem on demand. The kit does not include it.
 - The workflow pins Claude Code 2.1.296 and the model `claude-sonnet-5-5`. Update both when you update the kit.
 
 ## Removing it
 
-Delete `.claude/hooks`, the four skill folders, `.github/workflows/docs-check.yml`, and `scripts/`, and remove the `hooks` block from `.claude/settings.json`. The docs keep working without any of it.
+```bash
+npx skills remove tomfarina/document-site --all
+```
+
+Then delete `.claude/hooks`, `.github/workflows/docs-check.yml`, and `scripts/`, and remove the `hooks` block from `.claude/settings.json`. The docs keep working without any of it.
