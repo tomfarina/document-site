@@ -4,8 +4,7 @@
 # For every file changed between base and head, find the docs that cover it:
 #   - a feature file whose "## Files" list matches the path
 #   - a note whose "trigger:" front matter lists a matching path
-#   - the site profile, when a profile-gating file changed (serialization config,
-#     project files, package manifests, config patches)
+#   - the site profile, when the path matches its "## Gating files" list
 #
 # Prints one line per affected doc: "<doc>\t<changed file> <changed file> ...".
 # Prints nothing when no doc covers any changed path. Exit 0 always.
@@ -38,9 +37,10 @@ pairs=$(
     ' "$f"
   done
   for prof in $(find .claude/sites -maxdepth 1 -name '*.md' -not -name '_template.md' 2>/dev/null); do
-    for pat in 'App_Config/Include' '*.module.json' '*.scproj' 'packages.config' '*.csproj' 'package.json' 'global.json' '.nvmrc' 'Directory.Build.props'; do
-      echo -e "$prof\t$pat"
-    done
+    awk -v doc="$prof" '
+      /^## /{ in_list = ($0 ~ /^## Gating files/); next }
+      in_list && /^- / { line=$0; sub(/^- +/,"",line); gsub(/`/,"",line); split(line,p," "); if (p[1]!="" && p[1]!="unknown") print doc "\t" p[1] }
+    ' "$prof"
   done
 )
 [ -n "$pairs" ] || exit 0

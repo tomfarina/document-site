@@ -6,7 +6,7 @@ This is the one doc tree. There are no architecture pages. A cross-cutting fact 
 
 ## Baseline preconditions
 
-- <What must be true before any feature can be checked: a running head, a preview endpoint, a logged-in editor. On XP: nothing runs; every check is a static trace.>
+- <What must be true before any feature can be checked: a running app, a read-only endpoint, a logged-in user. Where nothing runs: every check is a static trace.>
 
 ## Sweep order
 

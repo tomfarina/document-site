@@ -30,4 +30,4 @@ Everything else is no. A change that leaves the mechanism as described is no eve
 - Line numbers refer to the doc as it is on this branch now.
 - Quote evidence. "The code changed" is not evidence; `src/Feature/Search/Index.cs:41` is.
 - Prefer deleting a sentence that is now false over adding a paragraph that is now true.
-- The site profile is a doc too. A changed serialization root, build command, or package version is reason 2 against `.claude/sites/<key>.md`.
+- The site profile is a doc too. A changed tool-owned path, build command, or runtime version is reason 2 against `.claude/sites/<key>.md`.

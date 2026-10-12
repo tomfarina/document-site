@@ -6,26 +6,21 @@ The profile at `.claude/sites/<key>.md` has two halves. The knowledge half is al
 
 | Field | Where it comes from | If unknown |
 |---|---|---|
-| Key, client, repo, role (`backend`, `head`, `both`) | Install step | Stop |
-| Platform (`xp`, `jss-on-xp`, `xm-cloud`) | Install step, confirm from packages | Confirm card |
+| Key, client, repo | Install step | Stop |
+| Stack | Install step, confirm from package manifests and project files | Confirm card |
 | Base branch, target branch, branch pattern | Install step, defaults `main`, `develop`, `agent/<ticket-key>` | Use defaults |
-| Sitecore version | `packages.config`, `*.csproj` PackageReference, or `package.json` for a head | Ask |
-| .NET or Node version | `TargetFramework`, `global.json`, `.nvmrc`, `engines` | Ask |
-| Helix or not, and where Foundation, Feature, Project live | Solution folders, project names | Record "not Helix" if absent |
-| Web Forms present | `.ascx`, `.aspx` under the web project | Record yes or no |
-| Serialization tool and roots | Unicorn configs under `App_Config/Include`, `*.module.json` for SCS, `.scproj` for TDS | Ask |
-| Architect's sync command | From the tool: `dotnet sitecore ser pull`, Unicorn sync, TDS | Ask |
-| Model generation (Glass, Synthesis, Leprechaun, none) | T4 templates, `*.tt`, Synthesis config, Leprechaun config | Record none |
-| Site definitions | `<sites>` patches under `App_Config/Include` | Record the list |
-| Config patch roots and order concerns | `App_Config/Include` folder names, `patch:before` and `patch:after` | Record |
-| Build command, result on a stock runner | What you ran in step 1 and what happened | Record "could not run" |
-| Test command, test framework | Test projects, `package.json` scripts | Record none |
-| Evidence ceiling | From the above: static trace only; passing build; tests run; head runs | Derive |
-| Runner OS | XP and JSS backend: Windows. Heads: Linux | Derive |
-| Head details | Component registry path, Layout Service or Edge endpoint, preview key secret name | Ask for the endpoint and secret name |
-| Item-change surface | Content Editor, Pages, or both | Derive from platform |
-| Review lens | Helix for XP; JSS for heads; Helix disabled when not Helix | Derive |
 | Do-not-touch fences | History, explorer reports, architect | Record with reason or "reason unknown, preserve as-is" |
+| Tool-owned paths, owning tool | Paths a tool writes: serialized content, migrations, generated code, lockfiles. Found from tool configs and generated-file headers | Ask |
+| Architect's sync command | From the owning tool | Ask |
+| Runtime versions | Project files, `global.json`, `.nvmrc`, `engines`, and the like | Ask |
+| Top-level modules | Solution or workspace folders, project names. On a Helix solution, where Foundation, Feature, and Project live | Record the folders as found |
+| Configuration roots and override order | Config folders, environment overlays, patch or merge order | Record |
+| Build command, result on a stock runner | What you ran in step 1 and what happened | Record "could not run" |
+| Test command, test framework | Test projects, package scripts | Record none |
+| Runner OS | What the build needs | Derive |
+| Evidence ceiling | From the above: static trace only; passing build; tests run; app runs | Derive |
+| Run command, read-only endpoints, secret names | Package scripts, launch configs, env files by name | Ask for the endpoint and secret names |
+| Gating files | The build and config files the fields above were read from | Record |
 | Wrong surfaces | Explorer reports: things that look like the fix location but are not | Record |
 | Eligibility overrides | Architect | Leave empty |
 
@@ -41,7 +36,7 @@ environment:
     build: ...
     test: ...
     lint: ...
-    ser-pull: ...
+    sync: ...
   post-build:      # health check; non-zero fails the environment
     - ...
 ```

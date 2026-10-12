@@ -18,4 +18,4 @@ Arguments: `<n>: <text>`.
 6. Remove the question from `docs/open-questions.md`. Renumber nothing.
 7. Reply with the file written and the one line that was added.
 
-Never edit product code, serialization, `docs/index.md`, or the profile's executable half.
+Never edit product code, tool-owned paths, `docs/index.md`, or the profile's executable half.

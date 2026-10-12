@@ -4,7 +4,7 @@ Paste into each read-only explorer subagent. Replace the angle-bracket fields.
 
 ---
 
-You are exploring one area of a Sitecore repo so a later writer can document it. Read the actual code. Do not guess from file names. Stop only when you can describe the full path through this area without hand-waving any step.
+You are exploring one area of a repo so a later writer can document it. Read the actual code. Do not guess from file names. Stop only when you can describe the full path through this area without hand-waving any step.
 
 Area: <layer or subsystem>
 Repo root: <path>
@@ -30,7 +30,7 @@ How a request or an item moves through this area, step by step, with `file:line`
 Every file you opened.
 
 ## Boundaries
-What this area calls and what calls it. Config patches that affect it. Serialization roots it depends on.
+What this area calls and what calls it. Configuration that affects it. Tool-owned paths it depends on.
 
 ## Non-obvious things
 Anything a developer new to this repo would get wrong. Each with the evidence and the tier.

@@ -11,8 +11,8 @@ Answer with `/docs-answer <n>: <text>`. Answered questions are removed by that c
 
 Proposed values the bootstrap is not sure of. Reply "ok" or the correction.
 
-- [1] Sitecore version: 9.3.0 (Supported: Sitecore.Kernel 13.0.0 in packages.config)
-- [2] Serialization: Unicorn, roots under src/Foundation/Serialization and src/Feature/*/serialization (Direct)
+- [1] Runtime versions: .NET Framework 4.8, Node 18 (Supported: TargetFramework in the web project, .nvmrc)
+- [2] Tool-owned paths: src/*/serialization, written by the serialization tool (Direct)
 
 ## Search
 
@@ -21,7 +21,7 @@ Proposed values the bootstrap is not sure of. Reply "ok" or the correction.
   Bet: (a), Inferred from the commit message "stop rebuild dying on one bad provider."
   If nobody knows: record Unknown, preserve as-is.
 
-## Rendering
+## <Next area>
 
 - [4] ...
 
