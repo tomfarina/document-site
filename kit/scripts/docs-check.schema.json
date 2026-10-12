@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["needs_update", "reason", "suggestions", "new_files"],
+  "properties": {
+    "needs_update": { "type": "boolean" },
+    "reason": { "type": "string", "maxLength": 600 },
+    "suggestions": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "start_line", "end_line", "replacement", "why"],
+        "properties": {
+          "path": { "type": "string" },
+          "start_line": { "type": "integer", "minimum": 1 },
+          "end_line": { "type": "integer", "minimum": 1 },
+          "replacement": { "type": "string" },
+          "why": { "type": "string", "maxLength": 300 }
+        }
+      }
+    },
+    "new_files": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "content", "why"],
+        "properties": {
+          "path": { "type": "string" },
+          "content": { "type": "string" },
+          "why": { "type": "string", "maxLength": 300 }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,213 @@
+name: docs check
+
+# On every same-repo pull request: a deterministic gate, then one read-only
+# model call only when the gate fires, then suggestions the author applies
+# with one click. Non-blocking. Add the label docs-not-needed to dismiss.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: docs-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      MARKER: "<!-- docs-check -->"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Dismissed by label
+        id: label
+        shell: bash
+        run: |
+          if echo '${{ toJson(github.event.pull_request.labels.*.name) }}' | grep -q '"docs-not-needed"'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Gate, no model
+        id: gate
+        if: steps.label.outputs.skip == 'false'
+        shell: bash
+        run: |
+          out=$(bash scripts/docs-gate.sh "origin/${{ github.base_ref }}" HEAD || true)
+          {
+            echo "affected<<EOF"
+            echo "$out"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ -z "$out" ]; then echo "No doc covers the changed paths."; else echo "$out"; fi
+
+      - name: Load the docs tooling from the base branch
+        if: steps.gate.outputs.affected != ''
+        shell: bash
+        run: |
+          git checkout "origin/${{ github.base_ref }}" -- .claude CLAUDE.md 2>/dev/null || true
+
+      - name: Install Claude Code
+        if: steps.gate.outputs.affected != ''
+        shell: bash
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash -s -- 2.1.296
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Judgment, one read-only call
+        id: judge
+        if: steps.gate.outputs.affected != ''
+        continue-on-error: true
+        shell: bash
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AFFECTED: ${{ steps.gate.outputs.affected }}
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
+          CLAUDE_CODE_RETRY_WATCHDOG: "1"
+          CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS: "300000"
+          CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1"
+        run: |
+          printf '%s\n' "$AFFECTED" > .docs-check-affected
+          claude -p "/docs-check origin/${{ github.base_ref }}" \
+            --model claude-sonnet-5-5 \
+            --permission-mode dontAsk \
+            --permission-prompts none \
+            --setting-sources user \
+            --strict-mcp-config \
+            --allowedTools "Read,Grep,Glob,Bash(git diff *),Bash(git log *),Bash(git show *),Bash(cat *)" \
+            --disallowedTools "Edit,Write,MultiEdit,WebFetch,WebSearch,Bash(curl *),Bash(wget *),Bash(git push *)" \
+            --max-turns 30 \
+            --max-budget-usd 1.50 \
+            --output-format json \
+            --json-schema "$(cat scripts/docs-check.schema.json)" > docs-check-raw.json
+          node -e '
+            const r = require("./docs-check-raw.json");
+            console.log("subtype:", r.subtype, "cost:", r.total_cost_usd);
+            if (r.subtype !== "success" || !r.structured_output) process.exit(1);
+            require("fs").writeFileSync("docs-check.json", JSON.stringify(r.structured_output, null, 2));
+          '
+
+      - name: Post suggestions
+        id: post
+        if: steps.gate.outputs.affected != ''
+        uses: actions/github-script@v7
+        env:
+          JUDGE_OK: ${{ steps.judge.outcome }}
+          AFFECTED: ${{ steps.gate.outputs.affected }}
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const marker = process.env.MARKER;
+
+            async function upsertComment(body) {
+              const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: pr.number, per_page: 100 });
+              const mine = comments.find(c => c.body && c.body.startsWith(marker));
+              const full = marker + '\n' + body;
+              if (mine) await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body: full });
+              else await github.rest.issues.createComment({ owner, repo, issue_number: pr.number, body: full });
+            }
+
+            if (process.env.JUDGE_OK !== 'success') {
+              await upsertComment('**Docs check could not run.** Non-blocking. The gate found docs covering changed paths:\n\n```\n' + process.env.AFFECTED + '\n```\nRun `/docs-check` locally, or add the label `docs-not-needed`.');
+              core.setOutput('fallback', '[]');
+              return;
+            }
+
+            const out = JSON.parse(fs.readFileSync('docs-check.json', 'utf8'));
+            if (!out.needs_update) {
+              await upsertComment('**Docs check: no update needed.** ' + out.reason);
+              core.setOutput('fallback', '[]');
+              return;
+            }
+
+            const { data: files } = await github.rest.pulls.listFiles({ owner, repo, pull_number: pr.number, per_page: 300 });
+            const inDiff = new Set(files.map(f => f.filename));
+            const fallback = [];
+            const comments = [];
+
+            for (const s of out.suggestions || []) {
+              if (!inDiff.has(s.path)) { fallback.push({ kind: 'edit', ...s }); continue; }
+              const body = s.why + '\n\n```suggestion\n' + s.replacement.replace(/\n$/, '') + '\n```';
+              const c = { path: s.path, line: s.end_line, side: 'RIGHT', body };
+              if (s.start_line < s.end_line) { c.start_line = s.start_line; c.start_side = 'RIGHT'; }
+              comments.push({ c, s });
+            }
+            for (const n of out.new_files || []) fallback.push({ kind: 'new', ...n });
+
+            if (comments.length) {
+              try {
+                await github.rest.pulls.createReview({
+                  owner, repo, pull_number: pr.number, event: 'COMMENT',
+                  body: marker + '\n**Docs check.** ' + out.reason + '\n\nApply each suggestion with one click, or add the label `docs-not-needed`.',
+                  comments: comments.map(x => x.c),
+                });
+              } catch (e) {
+                core.warning('review failed, falling back to a side PR: ' + e.message);
+                for (const x of comments) fallback.push({ kind: 'edit', ...x.s });
+              }
+            }
+
+            if (!comments.length && !fallback.length) {
+              await upsertComment('**Docs check: no update needed.** ' + out.reason);
+            }
+            fs.writeFileSync('docs-check-fallback.json', JSON.stringify(fallback));
+            core.setOutput('fallback', fallback.length ? 'yes' : '[]');
+            core.setOutput('reason', out.reason);
+
+      - name: Side PR for docs outside the diff
+        if: steps.post.outputs.fallback == 'yes'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REASON: ${{ steps.post.outputs.reason }}
+        run: |
+          git checkout -- .claude CLAUDE.md 2>/dev/null || true
+          node -e '
+            const fs = require("fs");
+            const items = JSON.parse(fs.readFileSync("docs-check-fallback.json", "utf8"));
+            for (const it of items) {
+              if (it.kind === "new") {
+                fs.mkdirSync(require("path").dirname(it.path), { recursive: true });
+                fs.writeFileSync(it.path, it.content.endsWith("\n") ? it.content : it.content + "\n");
+                continue;
+              }
+              const lines = fs.readFileSync(it.path, "utf8").split("\n");
+              const rep = it.replacement.replace(/\n$/, "").split("\n");
+              lines.splice(it.start_line - 1, it.end_line - it.start_line + 1, ...rep);
+              fs.writeFileSync(it.path, lines.join("\n"));
+            }
+          '
+          changed=$(git status --porcelain | awk '{print $2}' | grep -vE '^(docs/|\.claude/sites/|CLAUDE\.md|AGENTS\.md)' || true)
+          if [ -n "$changed" ]; then echo "refusing: files outside the docs set changed:"; echo "$changed"; exit 0; fi
+          if git diff --quiet && [ -z "$(git status --porcelain)" ]; then echo "nothing to propose"; exit 0; fi
+          head_ref="${{ github.event.pull_request.head.ref }}"
+          branch="docs/pr-${{ github.event.pull_request.number }}-$(date +%s)"
+          git config user.name "docs-check[bot]"
+          git config user.email "docs-check@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add docs .claude/sites CLAUDE.md AGENTS.md 2>/dev/null || true
+          git commit -m "docs: proposed update for #${{ github.event.pull_request.number }}"
+          git push -u origin "$branch"
+          url=$(gh pr create --base "$head_ref" --head "$branch" \
+            --title "docs: proposed update for #${{ github.event.pull_request.number }}" \
+            --body "Proposed by the docs check for #${{ github.event.pull_request.number }}. ${REASON}
+
+Merge this into your branch to apply, or close it and add the label \`docs-not-needed\` on the original PR.")
+          gh pr comment "${{ github.event.pull_request.number }}" --body "${MARKER}-side
+**Docs check.** ${REASON}
+
+The docs this touches are not in your diff, so the proposed edit is a one-click merge: ${url}"
