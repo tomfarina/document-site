@@ -5,7 +5,7 @@ description: The judgment half of the PR docs check. Given the docs the gate scr
 
 **Decide whether this change makes the docs wrong. Propose the smallest edit that makes them right. Say no when nothing is wrong.**
 
-Argument: the base ref to diff against. The gate's output is in `.docs-check-affected` when run by the workflow; when run by hand, run `bash scripts/docs-gate.sh <base-ref>` first and use its output.
+Arguments: the base ref to diff against, then the gate output on the lines after it. The workflow passes both. When run by hand with only the ref, run `bash .claude/docs-check/gate.sh <base-ref>` first and use its output.
 
 ## The only three reasons to say yes
 
@@ -17,12 +17,12 @@ Everything else is no. A change that leaves the mechanism as described is no eve
 
 ## Procedure
 
-1. Read `.docs-check-affected` or the gate output. Each line is a doc and the changed files it covers.
+1. Read the gate output. Each line is a doc and the changed files it covers.
 2. `git diff <base-ref>...HEAD -- <those files>`. Read the hunks, not the file names.
 3. Read each affected doc in full.
 4. For each doc, test the three reasons above against the diff. Collect `file:line` evidence for every yes.
 5. For each yes, write the smallest replacement: the exact lines to replace and the exact new text, keeping the doc's headings and shape. A new trap goes into the feature file's `## Gotchas` as one bullet with the tier and the evidence, or into a new note only when it applies across features. Never propose more than eight suggestions or three new files; if the change needs more, say so in `reason` and propose the most important.
-6. Return the JSON object in `scripts/docs-check.schema.json`. `reason` is one or two sentences a reviewer reads first. For `needs_update: false`, `reason` says what was checked and why it still holds.
+6. Return the JSON object in `.claude/docs-check/schema.json`. `reason` is one or two sentences a reviewer reads first. For `needs_update: false`, `reason` says what was checked and why it still holds.
 
 ## Rules
 
@@ -30,4 +30,4 @@ Everything else is no. A change that leaves the mechanism as described is no eve
 - Line numbers refer to the doc as it is on this branch now.
 - Quote evidence. "The code changed" is not evidence; `src/Feature/Search/Index.cs:41` is.
 - Prefer deleting a sentence that is now false over adding a paragraph that is now true.
-- The site profile is a doc too. A changed tool-owned path, build command, or runtime version is reason 2 against `.claude/sites/<key>.md`.
+- The site profile is a doc too. A changed tool-owned path, build command, or runtime version is reason 2 against `.claude/site.md`.

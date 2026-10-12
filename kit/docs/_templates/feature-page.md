@@ -10,7 +10,7 @@ Where a visitor or an editor finds it. The URL pattern, the menu path, the admin
 
 ## Driving it
 
-Where the app runs: the page to open against the read-only endpoint, the data it needs, the check that proves it works, and the `verify-<key>` section that drives it.
+Where the app runs: the page to open against the read-only endpoint, the data it needs, the check that proves it works, and the `verify` skill section that drives it.
 
 Where it does not: the static trace. The entry point, the files it passes through, and the evidence ceiling. "Static trace through `<entry point>` and `<view>`; no runnable environment" is a valid entry.
 

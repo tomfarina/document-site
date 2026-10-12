@@ -1,16 +1,13 @@
-# Site profile: <key>
+# Site profile
 
 Canonical. Agents read this before any file. Keep the whole file under 16 KB, critical lines first. Situational facts go in `docs/notes/` with a trigger line.
 
 ## Identity
 
-- Key: <key>
 - Client: <client>
 - Repo: <owner/repo>
 - Stack: unknown (one line: framework, language, major versions)
 - Base branch: main
-- Target branch: develop
-- Branch pattern: agent/<ticket-key>
 
 ## Fences
 
@@ -37,6 +34,7 @@ Agents read these and never edit them. A tool writes them and the architect sync
 - Build command: unknown
 - Builds on a stock runner: unknown (yes | no | could not run)
 - Test command: unknown
+- Lint command: unknown
 - Runner OS: unknown
 - Evidence ceiling: unknown (static trace | passing build | tests run | app runs)
 - Run command: unknown
@@ -54,21 +52,3 @@ Build and config files whose change can make a line in this profile false. One p
 Things that look like the fix location but are not.
 
 - unknown
-
-## Eligibility overrides
-
-- none
-
-## Environment
-
-```yaml
-environment:
-  initialize: []
-  maintenance: []
-  knowledge:
-    build: unknown
-    test: unknown
-    lint: unknown
-    sync: unknown
-  post-build: []
-```

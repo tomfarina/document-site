@@ -2,7 +2,7 @@
 
 <One sentence: what this repo is. Stack, major versions, what it serves.>
 
-Read `.claude/sites/<key>.md` before anything. Before changing code under a path a feature file lists, read that file. The index is `docs/index.md`. A note under `docs/notes/` with a trigger line applies when you touch what it names.
+Read `.claude/site.md` before anything. Before changing code under a path a feature file lists, read that file. The index is `docs/index.md`. A note under `docs/notes/` with a trigger line applies when you touch what it names.
 
 ## Must read first
 
@@ -11,7 +11,7 @@ Read `.claude/sites/<key>.md` before anything. Before changing code under a path
 
 ## Commands
 
-- Build: `<from the profile's environment.knowledge.build>`
+- Build: `<from the profile's Verification section>`
 - Test: `<...>`
 - Lint: `<...>`
 - Sync tool-owned paths (architect only): `<...>`

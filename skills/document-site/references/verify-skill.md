@@ -1,8 +1,8 @@
 # The verify skill
 
-Written by `document-site` step 4 only when the profile's evidence ceiling is `app runs`, following poteto's `create-verification-skill`: it interviews the repo, writes the skill, and proves it once end to end before handoff. "A generated skill that was never executed is a draft, not a deliverable." A repo that cannot run gets no verify skill; its feature files carry the static trace instead.
+Written by `document-site` step 4 only when the profile's evidence ceiling is `app runs`. It interviews the repo, writes the skill, and proves it once end to end before handoff: a generated skill that was never executed is a draft, not a deliverable. A repo that cannot run gets no verify skill; its feature files carry the static trace instead.
 
-Lives at `.claude/skills/verify-<key>/SKILL.md` with five sections.
+Lives at `.claude/skills/verify/SKILL.md` with five sections.
 
 ## Launch
 

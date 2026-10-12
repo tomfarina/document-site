@@ -8,7 +8,7 @@ You are exploring one area of a repo so a later writer can document it. Read the
 
 Area: <layer or subsystem>
 Repo root: <path>
-Site profile so far: <paste .claude/sites/<key>.md>
+Site profile so far: <paste .claude/site.md>
 
 Rules:
 

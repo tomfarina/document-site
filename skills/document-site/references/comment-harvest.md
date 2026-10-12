@@ -15,7 +15,7 @@ Classify every existing comment:
 
 Rules:
 
-- One commit, message `chore(<key>): move comments to docs`. No other changes in it.
+- One commit, message `chore: move comments to docs`. No other changes in it.
 - Do not touch generated files, vendored code, or tool-owned paths.
 - Do not reword code. Only comments move.
 - Where a claimed constraint has no obvious enforcer, the rule-table row says "enforcer: none yet." That is a result, not a failure.

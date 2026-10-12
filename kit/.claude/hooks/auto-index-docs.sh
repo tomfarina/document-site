@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# PostToolUse on Edit, Write, MultiEdit. Regenerates docs/index.md when a doc
-# file was added or removed. Exits fast when nothing changed. No model.
 set -euo pipefail
 
 root="${CLAUDE_PROJECT_DIR:-$(pwd)}"
@@ -16,11 +14,11 @@ generate() {
   echo
 
   local groups
-  groups=$(cd "$docs" && find . -mindepth 2 -name '*.md' -not -path './_templates/*' \
+  groups=$(cd "$docs" && find . -mindepth 2 -name '*.md' -not -path './_templates/*' -not -name README.md \
     | sed 's#^\./##' | cut -d/ -f1 | sort -u)
 
   local top
-  top=$(cd "$docs" && find . -maxdepth 1 -name '*.md' -not -name 'index.md' \
+  top=$(cd "$docs" && find . -maxdepth 1 -name '*.md' -not -name 'index.md' -not -name README.md \
     | sed 's#^\./##' | sort)
 
   if [ -n "$top" ]; then
@@ -35,7 +33,7 @@ generate() {
   for g in $groups; do
     echo "## $g"
     echo
-    (cd "$docs" && find "$g" -name '*.md' | sort) | while read -r f; do
+    (cd "$docs" && find "$g" -name '*.md' -not -name README.md | sort) | while read -r f; do
       name=$(basename "$f" .md)
       echo "- [$name]($f)"
     done

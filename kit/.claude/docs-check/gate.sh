@@ -4,12 +4,12 @@
 # For every file changed between base and head, find the docs that cover it:
 #   - a feature file whose "## Files" list matches the path
 #   - a note whose "trigger:" front matter lists a matching path
-#   - the site profile, when the path matches its "## Gating files" list
+#   - the site profile (.claude/site.md), when the path matches its "## Gating files" list
 #
 # Prints one line per affected doc: "<doc>\t<changed file> <changed file> ...".
 # Prints nothing when no doc covers any changed path. Exit 0 always.
 #
-# Usage: scripts/docs-gate.sh <base-ref> [head-ref]
+# Usage: .claude/docs-check/gate.sh <base-ref> [head-ref]
 set -euo pipefail
 
 base="${1:?base ref}"
@@ -18,7 +18,6 @@ head="${2:-HEAD}"
 changed=$(git diff --name-only "$base...$head" | grep -vE '^(docs/|\.claude/|CLAUDE\.md|AGENTS\.md)' || true)
 [ -n "$changed" ] || exit 0
 
-# (doc, pattern) pairs from feature files and triggered notes.
 pairs=$(
   for f in $(find docs/features -name '*.md' 2>/dev/null | grep -v README.md); do
     awk -v doc="$f" '
@@ -36,12 +35,13 @@ pairs=$(
       }
     ' "$f"
   done
-  for prof in $(find .claude/sites -maxdepth 1 -name '*.md' -not -name '_template.md' 2>/dev/null); do
+  prof=.claude/site.md
+  if [ -f "$prof" ]; then
     awk -v doc="$prof" '
       /^## /{ in_list = ($0 ~ /^## Gating files/); next }
       in_list && /^- / { line=$0; sub(/^- +/,"",line); gsub(/`/,"",line); split(line,p," "); if (p[1]!="" && p[1]!="unknown") print doc "\t" p[1] }
     ' "$prof"
-  done
+  fi
 )
 [ -n "$pairs" ] || exit 0
 
