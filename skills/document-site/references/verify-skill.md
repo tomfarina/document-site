@@ -18,7 +18,7 @@ How to reach each feature in the map and what to assert. One entry per feature f
 
 ## Evidence
 
-What a passing run produces and where it lands: screenshots at the widths the feature file names, the test output, the build log. The PR body's Verification section quotes from here.
+What a passing run produces and where it lands: screenshots at the widths the feature file names, the test output, the build log. The hand-off's Verification section quotes from here.
 
 ## Cleanup
 
@@ -26,6 +26,6 @@ How to stop the app and remove anything the run created.
 
 Rules:
 
-- Prove it once. Run every section before the bootstrap PR opens and record the result in the PR body. A section that could not run is written as `could not run: <reason>`, not left blank.
+- Prove it once. Run every section before the hand-off and record the result there. A section that could not run is written as `could not run: <reason>`, not left blank.
 - The skill reads the site profile for the endpoints and the secret names. Never hardcode either.
 - Nothing in it writes to a shared backend. The endpoints are read-only by design.

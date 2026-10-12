@@ -23,4 +23,4 @@ The profile at `.claude/site.md` is the first file an agent reads. It stays near
 
 ## Situational facts
 
-Not in the profile. A fact that applies only when touching certain paths is a note under `docs/notes/` from `docs/_templates/note.md`, with a `trigger:` line naming those paths, a tier, and a provenance suffix. The PR docs check reads the trigger the way it reads a feature file's `## Files` list. A note the architect states twice becomes a rule-table row with an enforcer, and the note then points at the enforcer.
+Not in the profile. A fact that applies only when touching certain paths is a note under `docs/notes/` from `templates/note.md`, with a `trigger:` line naming those paths, a tier, and a provenance suffix. The PR docs check reads the trigger the way it reads a feature file's `## Files` list. A note the architect states twice becomes a rule-table row with an enforcer, and the note then points at the enforcer.

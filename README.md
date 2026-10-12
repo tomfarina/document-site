@@ -44,7 +44,7 @@ In the repo's Actions settings, allow GitHub Actions to create pull requests. Th
 /document-site
 ```
 
-It opens one draft PR confined to `docs/`, `.claude/`, `CLAUDE.md`, and `AGENTS.md`, and writes the questions it could not answer from the code to `docs/open-questions.md`. Answer those a few at a time with `/docs-answer`, then merge the PR. From then on the docs check runs on every pull request.
+It writes to `docs/`, `.claude/`, `CLAUDE.md`, and `AGENTS.md`, commits nothing, and ends with the questions it could not answer from the code, written to `docs/open-questions.md`. Answer the ones under "Confirm" with `/docs-answer` before committing; those are the profile values the docs check will run against. Answer the rest when you can. Then commit, open the PR, and merge it. From then on the docs check runs on every pull request.
 
 ## Skills
 
@@ -56,7 +56,7 @@ Documents the repo. Sends read-only explorer subagents through the code, the too
 
 - A repo's `.claude/site.md` is mostly `unknown`
 - One new area needs a feature file
-- `/document-site with-comments`, only when the architect opts in. Adds the comment harvest, which edits product code in its own commit
+- `/document-site with-comments`, only when the architect opts in. Adds the comment harvest, which edits product code; commit those changes apart from the docs
 
 The [references](skills/document-site/references) folder holds what it reads: the explorer brief, the git history brief, where each profile field comes from, the layout of the open questions file, the shape of the verify skill, and the rules for the comment pass.
 
@@ -104,7 +104,7 @@ The install prompt copies [kit/](kit) into the repo. None of it calls a model.
 - `.claude/settings.json` wires the two hooks. `.gitattributes` keeps the bash files LF on Windows checkouts.
 - `.claude/site.md` is the site profile, the file agents read before any other. It holds identity, fences, tool-owned paths, runtime versions, build and test commands, the evidence ceiling, the gating files, and the places that look like the fix location but are not. Keep it under 16 KB.
 - `.claude/docs-check/schema.json` is the shape of the judgment's output: a `needs_update` flag, a reason, up to eight line-range suggestions, and up to three new files.
-- `docs/_templates/` holds `CLAUDE.md` under forty lines, `AGENTS.md` as a pointer to it, the feature file with its five fixed headings, and the note with `trigger`, `confidence`, and `source` front matter. The feature file's Files list is what the gate reads.
+- `skills/document-site/templates/` holds `CLAUDE.md` under forty lines, `AGENTS.md` as a pointer to it, the feature file with its five fixed headings, and the note with `trigger`, `confidence`, and `source` front matter. The feature file's Files list is what the gate reads.
 - `docs/features/README.md` explains the feature map. `docs/notes/README.md` states the bar for a note: an agent would reliably get the topic wrong without it.
 
 Run `bash .claude/docs-check/gate.sh <base-ref>` any time to see which docs cover your changes.

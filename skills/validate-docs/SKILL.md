@@ -13,7 +13,7 @@ This is the only test of whether the docs still work; the PR check only tests wh
    - **Wrong way**: the docs sent it to a file, surface, or step that is not where the work is. Damage.
    - **Lag**: the docs were stale but still led to the right place. Note, no damage.
    - **Gap**: the docs said nothing and it guessed right or wrong. Damage if wrong.
-4. Fix every wrong-way item in the doc that caused it, the same session, as one commit confined to `docs/`, `.claude/site.md`, and `CLAUDE.md`. Log lag and gaps in `docs/open-questions.md` under "Validated" with the date and the task.
+4. Fix every wrong-way item in the doc that caused it, the same session, with edits confined to `docs/`, `.claude/site.md`, and `CLAUDE.md`. Commit nothing; the person running it does. Log lag and gaps in `docs/open-questions.md` under "Validated" with the date and the task.
 5. Reply with the task, the score as counts of wrong-way, lag, and gap, and the files changed.
 
 Never edit product code or tool-owned paths.

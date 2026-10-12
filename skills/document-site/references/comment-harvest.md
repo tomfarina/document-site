@@ -1,6 +1,6 @@
 # Comment harvest
 
-Opt-in. Edits product code across the repo, so it runs only when the architect invokes `/document-site with-comments` and lands as its own commit inside the docs PR, or as its own PR on client repos where a sweeping change will be contested.
+Opt-in. Edits product code across the repo, so it runs only when the architect invokes `/document-site with-comments` and its changes are committed apart from the docs, or opened as their own PR on client repos where a sweeping change will be contested.
 
 Classify every existing comment:
 
@@ -15,7 +15,7 @@ Classify every existing comment:
 
 Rules:
 
-- One commit, message `chore: move comments to docs`. No other changes in it.
+- Commit nothing. The hand-off tells the architect to commit these changes alone as `chore: move comments to docs`.
 - Do not touch generated files, vendored code, or tool-owned paths.
 - Do not reword code. Only comments move.
 - Where a claimed constraint has no obvious enforcer, the rule-table row says "enforcer: none yet." That is a result, not a failure.

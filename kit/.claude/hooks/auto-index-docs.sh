@@ -14,7 +14,7 @@ generate() {
   echo
 
   local groups
-  groups=$(cd "$docs" && find . -mindepth 2 -name '*.md' -not -path './_templates/*' -not -name README.md \
+  groups=$(cd "$docs" && find . -mindepth 2 -name '*.md' -not -name README.md \
     | sed 's#^\./##' | cut -d/ -f1 | sort -u)
 
   local top
