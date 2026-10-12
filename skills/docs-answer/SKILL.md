@@ -1,6 +1,10 @@
 ---
 name: docs-answer
-description: Write one architect answer from docs/open-questions.md back into the doc it belongs to. Invoked as `/docs-answer <n>: <text>`. The answer lands in a feature file's Gotchas, a note, or the site profile, as a Direct claim with its source and date. "I don't know" becomes an Unknown entry with preserve-as-is. Removes the question from the queue.
+description: >-
+  Write one architect answer from docs/open-questions.md back into the doc it belongs to.
+  Invoked as `/docs-answer <n>: <text>`. The answer lands in a feature file's Gotchas, a note,
+  or the site profile, as a Direct claim with its source and date. "I don't know" becomes an
+  Unknown entry with preserve-as-is. Removes the question from the queue.
 ---
 
 **Write one answer where the next agent will find it. Nothing else changes.**

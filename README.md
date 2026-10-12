@@ -1,6 +1,6 @@
 # Agent-friendly repo kit
 
-The `kit/` folder holds files you copy into a repo so that agents can find their way around it and the docs stay correct as the code changes. The kit has four skills, two hooks, one pull request check, and the templates the skills write from.
+Files you install into a repo so that agents can find their way around it and the docs stay correct as the code changes. `skills/` holds four Claude Code skills, laid out so `npx skills add` finds them. `kit/` holds the rest: two hooks, one pull request check, and the templates the skills write from.
 
 After install, the repo carries a short `CLAUDE.md`, a site profile, one feature file per user-facing area, and a few notes. Two scripts keep `docs/index.md` current. On every pull request a gate script checks whether a changed path is one the docs cover. Only when it is does one read-only model call decide whether a sentence in those docs became false, and the workflow posts the fix as a suggestion the author applies with one click. Nothing runs on a schedule.
 
@@ -9,37 +9,42 @@ The gate script was smoke-tested on Git Bash on 2026-10-12. The skills and the w
 ## What you need
 
 - Claude Code, with Git Bash on PATH on Windows. The hooks and the gate script are bash and need no other runtime.
+- Node, for `npx skills add`. Skip it if you install by hand.
 - A GitHub repo where every change goes through a pull request.
 - An Anthropic API key to store as a repository secret.
 - The `gh` CLI, if you want to create the secret and the label from a terminal.
 
 ## Install
 
-1. Open a Claude Code session in the site repo and give it this prompt. Replace `<path-to-document-site>` with the path to your copy of this repo.
+1. Install the four skills. Pass `--copy` so the repo holds real files rather than links, which the workflow needs when it checks out `.claude` from the base branch.
 
-```text
-Read <path-to-document-site>/install-prompt.md and follow it.
+```bash
+npx skills add tomfarina/document-site --copy -y
 ```
 
-   It copies every kit file the repo does not have and merges the kit's two hooks into an existing `.claude/settings.json`. It asks before it replaces any file that differs from the kit's. It writes `.claude/sites/<key>.md` with the key, repo, client, and stack it can read from the repo, and tells you what it chose. It commits nothing. You can run it again after a kit update.
+   This writes `.claude/skills/<name>/` for each skill and a `skills-lock.json` at the repo root. Commit the lock file. `npx skills update` brings the skills up to date later.
 
-2. Store the API key for the workflow.
+2. Install everything else. Open a Claude Code session in the site repo and paste the text of [install-prompt.md](install-prompt.md).
+
+   It downloads this repo, copies every kit file the repo does not have, and merges the kit's two hooks into an existing `.claude/settings.json`. It asks before it replaces any file that differs from the kit's. It writes `.claude/sites/<key>.md` with the key, repo, client, and stack it can read from the repo, and tells you what it chose. It commits nothing. You can run it again after a kit update. If you skipped step 1, it copies the skills too.
+
+3. Store the API key for the workflow.
 
 ```bash
 gh secret set ANTHROPIC_API_KEY
 ```
 
-3. Create the label that dismisses the check.
+4. Create the label that dismisses the check.
 
 ```bash
 gh label create docs-not-needed
 ```
 
-4. In the repo's Actions settings, allow GitHub Actions to create pull requests. The workflow needs this for the side PR it opens when the doc to fix is not in the author's diff.
+5. In the repo's Actions settings, allow GitHub Actions to create pull requests. The workflow needs this for the side PR it opens when the doc to fix is not in the author's diff.
 
-5. Review and commit what the install changed.
+6. Review and commit what the install changed.
 
-6. Document the repo. In a Claude Code session in the site repo, run:
+7. Document the repo. In a Claude Code session in the site repo, run:
 
 ```text
 /document-site
@@ -47,20 +52,21 @@ gh label create docs-not-needed
 
    It opens one draft PR confined to `docs/`, `.claude/`, `CLAUDE.md`, and `AGENTS.md`, and writes the questions it could not answer from the code to `docs/open-questions.md`.
 
-7. Answer the open questions a few at a time. Each answer names the question number.
+8. Answer the open questions a few at a time. Each answer names the question number.
 
 ```text
 /docs-answer 3: We moved to Solr in 2021 because Lucene could not handle the provider index.
 ```
 
-8. Merge that PR. From then on the docs check runs on every pull request.
+9. Merge that PR. From then on the docs check runs on every pull request.
 
 ### Installing by hand
 
-On a repo with no `.claude/` or `docs/` folder, a plain copy does the same job as step 1. It overwrites any file that already exists, so use the prompt everywhere else.
+On a repo with no `.claude/` or `docs/` folder, a plain copy from a checkout of this repo does the same job as steps 1 and 2. It overwrites any file that already exists, so use the prompt everywhere else.
 
 ```bash
 cp -r <path-to-document-site>/kit/. .
+cp -r <path-to-document-site>/skills/. .claude/skills/
 cp .claude/sites/_template.md .claude/sites/<key>.md
 ```
 
