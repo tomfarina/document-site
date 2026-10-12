@@ -113,10 +113,6 @@ The workflow pins Claude Code 2.1.296 and the model `claude-sonnet-5-5`. Update 
 
 Start with the check optional. After a couple of months, count dismissed suggestions against applied ones. If fewer than about one in ten were dismissed, make the check required in branch protection and keep the label as the way out. If more were dismissed, tighten the three reasons in `.claude/skills/docs-check/SKILL.md` first.
 
-## Known gaps
-
-- The gate script was smoke-tested on 2026-10-12. The skills and the workflow have not yet run against a real repo.
-
 ## Removing it
 
 Delete `.claude/skills/document-site`, `.claude/skills/docs-answer`, `.claude/skills/docs-check`, `.claude/skills/validate-docs`, `.claude/docs-check`, the two hook files under `.claude/hooks`, and `.github/workflows/docs-check.yml`, and remove the two hook entries from `.claude/settings.json`. If you installed the skills with `npx skills add`, `npx skills remove tomfarina/document-site -y` removes those four. The docs keep working without any of it.
