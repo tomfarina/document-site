@@ -20,8 +20,14 @@ If you only want the skills, `npx skills add tomfarina/document-site --copy -y` 
 
 The repo needs every change to go through a pull request.
 
+The check runs on a Claude subscription, not an API key. Generate a one-year token on your machine and store it as a repo secret. The token belongs to the plan of whoever ran the command.
+
 ```bash
-gh secret set ANTHROPIC_API_KEY
+claude setup-token
+```
+
+```bash
+gh secret set CLAUDE_CODE_OAUTH_TOKEN
 ```
 
 Optionally, create the label authors can apply to skip the docs check on a pull request. Without it the check still runs; the label only exists to dismiss it.
@@ -68,7 +74,7 @@ Takes `<n>: <text>`, finds question `n` in `docs/open-questions.md`, and writes 
 
 ### docs-check
 
-The judgment half of the PR check. Reads the diff and the docs the gate found, and says yes for only three reasons. A listed path moved, a sentence states something the code no longer does, or the change adds a trap the next agent would fall into. Returns JSON with exact replacement lines and never writes a file. The workflow runs it on every PR where the gate fired. One session, Sonnet, capped at 1.50 USD.
+The judgment half of the PR check. Reads the diff and the docs the gate found, and says yes for only three reasons. A listed path moved, a sentence states something the code no longer does, or the change adds a trap the next agent would fall into. Returns JSON with exact replacement lines and never writes a file. The workflow runs it on every PR where the gate fired. One session on the subscription, Sonnet, capped at thirty turns.
 
 **Use when:**
 
@@ -111,7 +117,7 @@ The workflow pins Claude Code 2.1.296 and the model `claude-sonnet-5-5`. Update 
 
 ## Making the check required
 
-Start with the check optional. After a couple of months, count dismissed suggestions against applied ones. If fewer than about one in ten were dismissed, make the check required in branch protection and keep the label as the way out. If more were dismissed, tighten the three reasons in `.claude/skills/docs-check/SKILL.md` first.
+Start with the check optional. After a couple of months, count dismissed suggestions against applied ones. If fewer than about one in ten were dismissed, add the workflow's `check` job to the required status checks in branch protection and keep the label as the way out. If more were dismissed, tighten the three reasons in `.claude/skills/docs-check/SKILL.md` first.
 
 ## Removing it
 
